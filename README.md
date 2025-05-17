@@ -1,4 +1,4 @@
-# Welcome to your Lovable project
+
 
 ## Project info
 
@@ -58,13 +58,7 @@ This project is built with:
 - TypeScript
 - React
 - shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/6f02b582-0cb5-42be-ad90-7bd0dbad1165) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
+- Tailwind 
 
 Yes, you can!
 
