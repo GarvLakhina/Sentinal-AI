@@ -1,122 +1,11 @@
-import React, { useState, useEffect, useRef } from "react";
+
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Shield, Mail, Lock } from "lucide-react";
-import { app } from "../firebase";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
-import { getDatabase, ref, set } from "firebase/database";
-
-// SignUpForm component
-import { doc, setDoc } from "firebase/firestore";
-import { db } from "../firebase";
-
-const SignUpForm = () => {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (password !== confirmPassword) {
-      alert("Passwords do not match");
-      return;
-    }
-    const auth = getAuth(app);
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-      // Write user details to Firestore
-      await setDoc(doc(db, "users", user.uid), {
-        name: name,
-        email: user.email,
-        uid: user.uid,
-        role: "Security Analyst",
-        createdAt: new Date().toISOString()
-      });
-      alert("Sign up successful and user data saved! You can now log in.");
-      setName("");
-      setEmail("");
-      setPassword("");
-      setConfirmPassword("");
-    } catch (error: any) {
-      alert("Sign up failed: " + error.message);
-    }
-  };
-
-
-  return (
-    <form onSubmit={handleSignUp}>
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="signup-name">Name</Label>
-          <div className="relative">
-            <Input
-              id="signup-name"
-              type="text"
-              className="cyber-input"
-              placeholder="Your Name"
-              value={name}
-              onChange={e => setName(e.target.value)}
-              required
-            />
-          </div>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="signup-email">Email</Label>
-          <div className="relative">
-            <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-            <Input
-              id="signup-email"
-              type="email"
-              className="pl-10 cyber-input"
-              placeholder="you@example.com"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              required
-            />
-          </div>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="signup-password">Password</Label>
-          <div className="relative">
-            <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-            <Input
-              id="signup-password"
-              type="password"
-              className="pl-10 cyber-input"
-              placeholder="••••••••"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              required
-            />
-          </div>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="confirm-password">Confirm Password</Label>
-          <div className="relative">
-            <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-            <Input
-              id="confirm-password"
-              type="password"
-              className="pl-10 cyber-input"
-              placeholder="••••••••"
-              value={confirmPassword}
-              onChange={e => setConfirmPassword(e.target.value)}
-              required
-            />
-          </div>
-        </div>
-        <Button className="w-full text-black bg-cyber-blue hover:bg-cyber-blue/90" type="submit">
-          Create Account
-        </Button>
-      </div>
-    </form>
-  );
-};
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -124,27 +13,11 @@ const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // Login handler with Firebase Auth and Realtime Database
-  const handleLogin = async (e: React.FormEvent) => {
+  // Login handler (dummy for now)
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    const auth = getAuth(app);
-    const db = getDatabase(app);
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-      // Write user details to Realtime Database
-      await set(ref(db, "users/" + user.uid), {
-        email: user.email,
-        uid: user.uid,
-        lastLogin: new Date().toISOString()
-      });
-      alert("Login successful and user data saved!");
-      navigate("/dashboard");
-    } catch (error: any) {
-      alert("Login failed: " + error.message);
-    }
+    navigate("/dashboard");
   };
-
 
   // Matrix-style background animation
   useEffect(() => {
@@ -303,8 +176,56 @@ const LoginPage = () => {
             
             {/* Sign Up Tab */}
             <TabsContent value="signup">
-  <SignUpForm />
-</TabsContent>
+              <form onSubmit={(e) => e.preventDefault()}>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-email">Email</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                      <Input
+                        id="signup-email"
+                        type="email"
+                        className="pl-10 cyber-input"
+                        placeholder="you@example.com"
+                        required
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-password">Password</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                      <Input
+                        id="signup-password"
+                        type="password"
+                        className="pl-10 cyber-input"
+                        placeholder="••••••••"
+                        required
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="confirm-password">Confirm Password</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                      <Input
+                        id="confirm-password"
+                        type="password"
+                        className="pl-10 cyber-input"
+                        placeholder="••••••••"
+                        required
+                      />
+                    </div>
+                  </div>
+                  
+                  <Button className="w-full text-black bg-cyber-blue hover:bg-cyber-blue/90">
+                    Create Account
+                  </Button>
+                </div>
+              </form>
+            </TabsContent>
           </Tabs>
           
           <p className="text-center text-xs text-gray-400 mt-6">

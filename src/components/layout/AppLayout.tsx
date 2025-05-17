@@ -1,8 +1,4 @@
-import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "../../firebase";
+import { useState } from "react";
 import { Outlet, NavLink } from "react-router-dom";
 import { LayoutDashboard, Network, Shield, Menu, X, LogOut, Bell, BarChart, Settings, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -10,48 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 const AppLayout = () => {
-  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [profile, setProfile] = useState<{ name: string; role: string } | null>(null);
-  const [loadingProfile, setLoadingProfile] = useState(true);
-  const [showSignOut, setShowSignOut] = useState(false);
-  const signOutRef = useRef<HTMLDivElement>(null);
-
-  // Close dropdown if clicked outside
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (signOutRef.current && !signOutRef.current.contains(event.target as Node)) {
-        setShowSignOut(false);
-      }
-    }
-    if (showSignOut) {
-      document.addEventListener("mousedown", handleClickOutside);
-    } else {
-      document.removeEventListener("mousedown", handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [showSignOut]);
-
-  useEffect(() => {
-    const auth = getAuth();
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setLoadingProfile(true);
-      if (user) {
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        if (userDoc.exists()) {
-          setProfile(userDoc.data() as { name: string; role: string });
-        } else {
-          setProfile(null);
-        }
-      } else {
-        setProfile(null);
-      }
-      setLoadingProfile(false);
-    });
-    return () => unsubscribe();
-  }, []);
 
   const navigationItems = [
     { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
@@ -79,7 +34,7 @@ const AppLayout = () => {
                 <Shield size={18} className="text-black" />
               </div>
               <span className="font-mono text-xl tracking-tight text-cyber-blue">
-                Sentinel AI
+                CyberPulse
               </span>
             </div>
             <Button
@@ -119,44 +74,18 @@ const AppLayout = () => {
           {/* User Info & Logout */}
           <div className="border-t border-cyber-blue/20 p-4">
             <div className="flex items-center justify-between">
-              <button className="flex items-center space-x-3 focus:outline-none" onClick={() => navigate("/profile")}>
+              <div className="flex items-center space-x-3">
                 <div className="h-8 w-8 rounded-full bg-cyber-subtle flex items-center justify-center">
-                  <span className="text-xs font-medium">
-                    {loadingProfile
-                      ? "--"
-                      : profile && profile.name
-                      ? profile.name.split(" ").map(n => n[0]).join("").toUpperCase()
-                      : "?"}
-                  </span>
+                  <span className="text-xs font-medium">JS</span>
                 </div>
                 <div className="space-y-0.5">
-                  <p className="text-sm font-medium text-gray-200">
-                    {loadingProfile ? "Loading..." : profile?.name || "Unknown User"}
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    {loadingProfile ? "" : profile?.role || ""}
-                  </p>
+                  <p className="text-sm font-medium text-gray-200">John Smith</p>
+                  <p className="text-xs text-gray-400">Security Analyst</p>
                 </div>
-              </button>
-              <div className="relative" ref={signOutRef}>
-                <Button variant="ghost" size="icon" className="text-gray-400 hover:text-cyber-blue" onClick={() => setShowSignOut((prev) => !prev)}>
-                  <LogOut size={18} />
-                </Button>
-                {showSignOut && (
-  <div className="absolute left-full top-1/2 -translate-y-1/2 w-40 bg-cyber-dark border border-cyber-blue/40 rounded-lg shadow-2xl z-[9999]">
-    <button
-      className="block w-full px-4 py-2 text-left text-gray-200 hover:bg-cyber-blue/10 transition-colors"
-      onClick={async () => {
-        const auth = getAuth();
-        await signOut(auth);
-        navigate("/login");
-      }}
-    >
-      <span className="font-semibold">Sign Out</span>
-    </button>
-  </div>
-)}
               </div>
+              <Button variant="ghost" size="icon" className="text-gray-400 hover:text-cyber-blue">
+                <LogOut size={18} />
+              </Button>
             </div>
           </div>
         </div>

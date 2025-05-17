@@ -14,7 +14,6 @@ import SettingsPage from "./pages/SettingsPage";
 import MonitoringPage from "./pages/MonitoringPage";
 import NotFound from "./pages/NotFound";
 import AppLayout from "./components/layout/AppLayout";
-import ProfilePage from "./pages/ProfilePage";
 
 const queryClient = new QueryClient();
 
@@ -35,7 +34,6 @@ const App = () => (
               <Route path="/reports" element={<ReportsPage />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/monitoring" element={<MonitoringPage />} />
-              <Route path="/profile" element={<ProfilePage />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

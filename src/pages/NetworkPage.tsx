@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { useScan } from '../contexts/ScanContext';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ import { NetworkVisualization } from "@/components/network/NetworkVisualization"
 import { NetworkLegend } from "@/components/network/NetworkLegend";
 
 const NetworkPage = () => {
+  const { scanResult } = useScan();
   const [nodeTypeFilters, setNodeTypeFilters] = useState({
     web: true,
     db: true,
