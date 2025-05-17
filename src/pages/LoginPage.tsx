@@ -6,18 +6,71 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Shield, Mail, Lock } from "lucide-react";
+import { auth, db } from "../firebase";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { setDoc, doc } from "firebase/firestore";
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [signupName, setSignupName] = useState("");
+  const [signupEmail, setSignupEmail] = useState("");
+  const [signupPassword, setSignupPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
-  // Login handler (dummy for now)
-  const handleLogin = (e: React.FormEvent) => {
+  // Login handler with Firebase
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    navigate("/dashboard");
+    setError(null);
+    setSuccess(null);
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      setSuccess("Login successful!");
+      navigate("/dashboard");
+    } catch (err: any) {
+      setError(err.message || "Login failed.");
+    }
   };
+
+  // Signup handler with Firebase
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSuccess(null);
+    if (!signupName.trim()) {
+      setError("Name is required.");
+      return;
+    }
+    if (signupPassword !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, signupEmail, signupPassword);
+      // Update Firebase Auth profile with display name
+      await updateProfile(userCredential.user, { displayName: signupName });
+      // Store user info in Firestore
+      await setDoc(doc(db, "users", userCredential.user.uid), {
+        uid: userCredential.user.uid,
+        name: signupName,
+        email: signupEmail
+      });
+      setSuccess("Account created! You can now log in.");
+      setSignupName("");
+      setSignupEmail("");
+      setSignupPassword("");
+      setConfirmPassword("");
+    } catch (err: any) {
+      setError(err.message || "Signup failed.");
+    }
+  };
+
+
+  // (Removed duplicate declarations and dummy login handler. All logic is now in the new handlers above.)
 
   // Matrix-style background animation
   useEffect(() => {
@@ -114,7 +167,13 @@ const LoginPage = () => {
             
             {/* Login Tab */}
             <TabsContent value="login">
-              <form onSubmit={handleLogin}>
+              {error && (
+  <div className="mb-4 text-red-500 text-center text-sm">{error}</div>
+)}
+{success && (
+  <div className="mb-4 text-green-500 text-center text-sm">{success}</div>
+)}
+<form onSubmit={handleLogin}>
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
@@ -127,6 +186,7 @@ const LoginPage = () => {
                         placeholder="you@example.com"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
+                        autoComplete="username"
                         required
                       />
                     </div>
@@ -143,6 +203,7 @@ const LoginPage = () => {
                         placeholder="••••••••"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
+                        autoComplete="current-password"
                         required
                       />
                     </div>
@@ -176,7 +237,22 @@ const LoginPage = () => {
             
             {/* Sign Up Tab */}
             <TabsContent value="signup">
-              <form onSubmit={(e) => e.preventDefault()}>
+              <form onSubmit={handleSignup}>
+  <div className="space-y-2">
+    <Label htmlFor="signup-name">Name</Label>
+    <div className="relative">
+      <Input
+        id="signup-name"
+        type="text"
+        className="pl-4 cyber-input"
+        placeholder="Your Name"
+        value={signupName}
+        onChange={(e) => setSignupName(e.target.value)}
+        autoComplete="name"
+        required
+      />
+    </div>
+  </div>
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="signup-email">Email</Label>
@@ -187,6 +263,9 @@ const LoginPage = () => {
                         type="email"
                         className="pl-10 cyber-input"
                         placeholder="you@example.com"
+                        value={signupEmail}
+                        onChange={(e) => setSignupEmail(e.target.value)}
+                        autoComplete="username"
                         required
                       />
                     </div>
@@ -201,6 +280,9 @@ const LoginPage = () => {
                         type="password"
                         className="pl-10 cyber-input"
                         placeholder="••••••••"
+                        value={signupPassword}
+                        onChange={(e) => setSignupPassword(e.target.value)}
+                        autoComplete="new-password"
                         required
                       />
                     </div>
@@ -215,6 +297,9 @@ const LoginPage = () => {
                         type="password"
                         className="pl-10 cyber-input"
                         placeholder="••••••••"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        autoComplete="new-password"
                         required
                       />
                     </div>

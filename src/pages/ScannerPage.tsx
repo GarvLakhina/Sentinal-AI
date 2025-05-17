@@ -1,5 +1,8 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { db } from "../firebase";
+import { collection, addDoc, getDocs, deleteDoc, doc, query, where } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -81,6 +84,75 @@ const vulnerabilities: Vulnerability[] = [
 ];
 
 const ScannerPage = () => {
+  const [userTargets, setUserTargets] = useState<{id: string, url: string}[]>([]);
+  const [newUrl, setNewUrl] = useState("");
+  const [addUrlError, setAddUrlError] = useState<string | null>(null);
+  const [addUrlSuccess, setAddUrlSuccess] = useState<string | null>(null);
+  const [user, setUser] = useState<any>(null);
+
+  // Fetch user and their URLs on mount
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, async (u) => {
+      setUser(u);
+      if (u) {
+        const q = collection(db, `users/${u.uid}/targets`);
+        const snap = await getDocs(q);
+        setUserTargets(snap.docs.map(doc => ({id: doc.id, url: doc.data().url})));
+      } else {
+        setUserTargets([]);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Basic URL validation
+  function isValidUrl(url: string) {
+    try {
+      new URL(url);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  // Add a new URL for testing
+  const handleAddUrl = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAddUrlError(null);
+    setAddUrlSuccess(null);
+    if (!user) {
+      setAddUrlError("You must be logged in.");
+      return;
+    }
+    if (!isValidUrl(newUrl)) {
+      setAddUrlError("Please enter a valid URL (including http/https). Example: https://example.com");
+      return;
+    }
+    try {
+      // Prevent duplicate URLs
+      if (userTargets.some(t => t.url === newUrl)) {
+        setAddUrlError("This URL is already added.");
+        return;
+      }
+      const docRef = await addDoc(collection(db, `users/${user.uid}/targets`), { url: newUrl });
+      setUserTargets([...userTargets, { id: docRef.id, url: newUrl }]);
+      setNewUrl("");
+      setAddUrlSuccess("URL added successfully!");
+    } catch (err: any) {
+      setAddUrlError("Failed to add URL: " + (err.message || "Unknown error"));
+    }
+  };
+
+  // Remove a URL
+  const handleRemoveUrl = async (id: string) => {
+    if (!user) return;
+    try {
+      await deleteDoc(doc(db, `users/${user.uid}/targets`, id));
+      setUserTargets(userTargets.filter(t => t.id !== id));
+    } catch {}
+  };
+
   const [targets, setTargets] = useState<string[]>([""]);
   const [scanType, setScanType] = useState<"quick" | "full" | "custom">("quick");
   const [scanDepth, setScanDepth] = useState(50);
@@ -193,6 +265,44 @@ const ScannerPage = () => {
   
   return (
     <div className="space-y-6">
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Add a URL for Testing</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleAddUrl} className="flex gap-2 items-center mb-2">
+            <Input
+              type="url"
+              placeholder="https://example.com"
+              value={newUrl}
+              onChange={e => setNewUrl(e.target.value)}
+              className="flex-1"
+              required
+            />
+            <Button type="submit">Add URL</Button>
+          </form>
+          {addUrlError && <div className="text-red-500 text-sm mb-2">{addUrlError}</div>}
+          {addUrlSuccess && <div className="text-green-600 text-sm mb-2">{addUrlSuccess}</div>}
+          <div>
+            <h4 className="font-semibold mb-2">Your URLs for Testing</h4>
+            {userTargets.length === 0 ? (
+              <div className="text-gray-500 text-sm">No URLs added yet.</div>
+            ) : (
+              <ul className="space-y-2">
+                {userTargets.map(t => (
+                  <li key={t.id} className="flex items-center justify-between border px-3 py-2 rounded">
+                    <span className="truncate max-w-xs block">{t.url}</span>
+                    <Button variant="destructive" size="sm" onClick={() => handleRemoveUrl(t.id)}>
+                      Remove
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-white">Vulnerability Scanner</h1>
       </div>
@@ -371,19 +481,71 @@ const ScannerPage = () => {
             {/* Scan results */}
             {scanComplete && (
               <div className="space-y-6">
-                {/* Summary */}
-                <div className="grid grid-cols-4 gap-4 mb-6">
-                  {[
-                    { label: "Total", count: vulnerabilities.length, color: "text-cyber-blue" },
-                    { label: "Critical", count: vulnerabilities.filter(v => v.severity === "critical").length, color: "text-red-400" },
-                    { label: "High", count: vulnerabilities.filter(v => v.severity === "high").length, color: "text-orange-400" },
-                    { label: "Medium", count: vulnerabilities.filter(v => v.severity === "medium" || v.severity === "low").length, color: "text-yellow-400" },
-                  ].map(item => (
-                    <div key={item.label} className="p-4 bg-cyber-darker rounded-md text-center">
-                      <div className={`text-2xl font-bold ${item.color}`}>{item.count}</div>
-                      <div className="text-xs text-gray-400">{item.label}</div>
+                {/* Attack Summary Card */}
+                <div className="flex flex-col md:flex-row gap-4 items-center mb-6 p-4 rounded-lg border border-cyber-blue/40 bg-cyber-blue/5">
+                  <div className="flex items-center gap-4 flex-1">
+                    {visualizationType === 'sql' && <Database size={48} className="text-cyber-blue" />}
+                    {visualizationType === 'xss' && <Code size={48} className="text-cyber-magenta" />}
+                    {visualizationType === 'mitm' && <Zap size={48} className="text-cyber-orange" />}
+                    <div>
+                      <div className="text-lg font-bold text-cyber-blue">
+                        {visualizationType === 'sql' && 'SQL Injection Attack Predicted'}
+                        {visualizationType === 'xss' && 'Cross-Site Scripting (XSS) Predicted'}
+                        {visualizationType === 'mitm' && 'Man-in-the-Middle (MITM) Attack Predicted'}
+                      </div>
+                      <div className="text-gray-300 mt-1">
+                        {visualizationType === 'sql' && 'Your application login or data endpoints may be vulnerable to SQL injection. Attackers could access or modify your database.'}
+                        {visualizationType === 'xss' && 'User input fields may be vulnerable to XSS, allowing attackers to inject malicious scripts into your site.'}
+                        {visualizationType === 'mitm' && 'API endpoints or data flows may be susceptible to interception by a Man-in-the-Middle.'}
+                      </div>
                     </div>
-                  ))}
+                  </div>
+                  <div className="flex flex-col gap-2 min-w-[220px]">
+                    <Badge className={
+                      visualizationType === 'sql' ? 'bg-red-500/20 text-red-400 border-red-500/40' :
+                      visualizationType === 'xss' ? 'bg-orange-500/20 text-orange-400 border-orange-500/40' :
+                      visualizationType === 'mitm' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/40' :
+                      'bg-gray-500/20 text-gray-400 border-gray-500/40'
+                    }>
+                      {visualizationType === 'sql' && 'Critical'}
+                      {visualizationType === 'xss' && 'High'}
+                      {visualizationType === 'mitm' && 'Medium'}
+                    </Badge>
+                    <Button size="sm" className="mt-2" onClick={() => window.print()}>
+                      Download Report
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Recommendations & Details */}
+                <div className="bg-cyber-darker/80 p-6 rounded-lg border border-cyber-blue/20">
+                  <h3 className="text-cyber-blue font-bold mb-2">Remediation & Recommendations</h3>
+                  <ul className="list-disc pl-6 text-gray-300 space-y-2">
+                    {visualizationType === 'sql' && (
+                      <>
+                        <li>Use parameterized queries or prepared statements for all database access.</li>
+                        <li>Sanitize and validate all user inputs, especially in login and data forms.</li>
+                        <li>Restrict database user permissions as much as possible.</li>
+                        <li>Monitor and log database access for suspicious activity.</li>
+                      </>
+                    )}
+                    {visualizationType === 'xss' && (
+                      <>
+                        <li>Sanitize and escape all user-generated content before rendering.</li>
+                        <li>Implement Content Security Policy (CSP) headers to restrict script execution.</li>
+                        <li>Use frameworks that auto-escape output (React, Angular, etc.).</li>
+                        <li>Validate input on both client and server sides.</li>
+                      </>
+                    )}
+                    {visualizationType === 'mitm' && (
+                      <>
+                        <li>Enforce HTTPS for all endpoints and redirect all HTTP traffic to HTTPS.</li>
+                        <li>Use strong TLS configurations and keep certificates up to date.</li>
+                        <li>Validate SSL certificates on both client and server sides.</li>
+                        <li>Educate users about phishing and certificate warnings.</li>
+                      </>
+                    )}
+                  </ul>
                 </div>
                 
                 {/* Action buttons */}
