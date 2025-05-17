@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { useScan } from '../contexts/ScanContext';
 import { Calendar, Download, Filter } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,16 +11,19 @@ import { ExploitedServicesChart } from "@/components/reports/ExploitedServicesCh
 import { ExportReportModal } from "@/components/reports/ExportReportModal";
 
 const ReportsPage = () => {
+  const { scanResult } = useScan();
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [dateRange, setDateRange] = useState<"day" | "week" | "month" | "year">("week");
 
+  if (!scanResult) return <div>No report available.</div>;
+
   // Mock data for overview cards
   const summaryData = {
-    totalScans: 157,
-    totalVulnerabilities: 89,
-    resolvedVulnerabilities: 64,
-    unresolvedVulnerabilities: 25,
-    attackSources: 38
+    totalScans: scanResult.totalScans || 0,
+    totalVulnerabilities: scanResult.totalVulnerabilities || 0,
+    resolvedVulnerabilities: scanResult.resolvedVulnerabilities || 0,
+    unresolvedVulnerabilities: scanResult.unresolvedVulnerabilities || 0,
+    attackSources: scanResult.attackSources || 0
   };
 
   return (
