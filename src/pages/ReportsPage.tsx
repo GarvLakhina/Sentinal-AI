@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import React, { useState, useEffect } from 'react';
 import { useScan } from '../contexts/ScanContext';
 import { Calendar, Download, Filter } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,11 +10,26 @@ import { ExploitedServicesChart } from "@/components/reports/ExploitedServicesCh
 import { ExportReportModal } from "@/components/reports/ExportReportModal";
 
 const ReportsPage = () => {
-  const { scanResult } = useScan();
+  const { scanResult, lastUpdated, refreshAllPages } = useScan();
+  const [forceUpdate, setForceUpdate] = useState(0);
+  
+  // Force refresh when scan results change
+  useEffect(() => {
+    if (lastUpdated) {
+      console.log('ReportsPage: Detected scan result update, refreshing with URL:', scanResult?.url);
+      setForceUpdate(prev => prev + 1);
+    }
+  }, [lastUpdated, scanResult?.url]);
+  
+  // Force refresh on component mount
+  useEffect(() => {
+    console.log('ReportsPage: Component mounted, refreshing');
+    refreshAllPages();
+  }, []);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [dateRange, setDateRange] = useState<"day" | "week" | "month" | "year">("week");
 
-  if (!scanResult) return <div>No report available.</div>;
+  if (!scanResult) return <div className="text-gray-400 text-center mt-8">No report available. Please run a scan from the Scanner page.</div>;
 
   // Mock data for overview cards
   const summaryData = {
@@ -28,13 +42,22 @@ const ReportsPage = () => {
 
   return (
     <div className="space-y-6">
+      {scanResult && (
+        <div className="mb-2">
+          <span className="font-mono text-gray-400 text-xs">URL:</span>
+          <span className="ml-2 text-cyber-blue font-mono text-xs">{scanResult?.url || scanResult?.scanOptions?.url || "(unknown)"}</span>
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-white">Reports & Analytics</h1>
         
         <div className="flex items-center space-x-4">
           <Button 
             className="cyber-button" 
-            onClick={() => setIsExportModalOpen(true)}
+            onClick={() => {
+              console.log('Opening export modal for URL:', scanResult?.url);
+              setIsExportModalOpen(true);
+            }}
           >
             <Download size={16} className="mr-2" />
             Export Report
@@ -112,7 +135,7 @@ const ReportsPage = () => {
             <CardTitle className="text-lg font-mono text-gray-300">Attack Frequency</CardTitle>
           </CardHeader>
           <CardContent className="h-[300px]">
-            <AttackFrequencyChart timeRange={dateRange} />
+            <AttackFrequencyChart timeRange={dateRange} scanResult={scanResult} />
           </CardContent>
         </Card>
         
@@ -122,7 +145,7 @@ const ReportsPage = () => {
             <CardTitle className="text-lg font-mono text-gray-300">Vulnerability Trends</CardTitle>
           </CardHeader>
           <CardContent className="h-[300px]">
-            <VulnerabilityTrendsChart timeRange={dateRange} />
+            <VulnerabilityTrendsChart timeRange={dateRange} scanResult={scanResult} />
           </CardContent>
         </Card>
         
@@ -132,7 +155,7 @@ const ReportsPage = () => {
             <CardTitle className="text-lg font-mono text-gray-300">Top Exploited Services</CardTitle>
           </CardHeader>
           <CardContent className="h-[300px]">
-            <ExploitedServicesChart />
+            <ExploitedServicesChart scanResult={scanResult} />
           </CardContent>
         </Card>
       </div>

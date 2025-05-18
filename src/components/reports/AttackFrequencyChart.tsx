@@ -6,56 +6,16 @@ interface AttackFrequencyChartProps {
   timeRange: "day" | "week" | "month" | "year";
 }
 
-export const AttackFrequencyChart = ({ timeRange }: AttackFrequencyChartProps) => {
-  // Sample data - in a real app, this would come from an API call
-  const dayData = [
-    { time: "00:00", attacks: 4 },
-    { time: "04:00", attacks: 2 },
-    { time: "08:00", attacks: 7 },
-    { time: "12:00", attacks: 12 },
-    { time: "16:00", attacks: 14 },
-    { time: "20:00", attacks: 8 },
-  ];
-  
-  const weekData = [
-    { time: "Mon", attacks: 18 },
-    { time: "Tue", attacks: 12 },
-    { time: "Wed", attacks: 24 },
-    { time: "Thu", attacks: 30 },
-    { time: "Fri", attacks: 22 },
-    { time: "Sat", attacks: 10 },
-    { time: "Sun", attacks: 8 },
-  ];
-  
-  const monthData = [
-    { time: "Week 1", attacks: 48 },
-    { time: "Week 2", attacks: 64 },
-    { time: "Week 3", attacks: 52 },
-    { time: "Week 4", attacks: 70 },
-  ];
-  
-  const yearData = [
-    { time: "Jan", attacks: 145 },
-    { time: "Feb", attacks: 120 },
-    { time: "Mar", attacks: 178 },
-    { time: "Apr", attacks: 210 },
-    { time: "May", attacks: 190 },
-    { time: "Jun", attacks: 240 },
-    { time: "Jul", attacks: 280 },
-    { time: "Aug", attacks: 260 },
-    { time: "Sep", attacks: 300 },
-    { time: "Oct", attacks: 280 },
-    { time: "Nov", attacks: 320 },
-    { time: "Dec", attacks: 290 },
-  ];
-  
-  const dataMap = {
-    day: dayData,
-    week: weekData,
-    month: monthData,
-    year: yearData
-  };
-  
+export const AttackFrequencyChart = ({ timeRange, scanResult }: AttackFrequencyChartProps & { scanResult?: any }) => {
+  // Only use backend data, no hardcoded fallback
+  const backendData = scanResult?.charts?.attackFrequencyData;
+  const dataMap = backendData || {};
+  const chartData = dataMap[timeRange] || [];
+
+  if (!chartData.length) {
+    return <div className="text-gray-400 text-center mt-8">No data available for this time range.</div>;
+  }
+
   return (
     <ResponsiveContainer width="100%" height="100%">
       <BarChart data={dataMap[timeRange]} margin={{ top: 10, right: 30, left: 0, bottom: 5 }}>

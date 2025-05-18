@@ -1,12 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ThreatLevelIndicator } from '../components/ThreatLevelIndicator';
 import { AttackGraph } from '../components/AttackGraph';
 import { VulnerabilityTable } from '../components/VulnerabilityTable';
 import { AlertsPanel } from '../components/AlertsPanel';
-import { useScan } from '../contexts/ScanContext';
+import { useScan } from "@/contexts/ScanContext";
 
 export default function Dashboard() {
-  const { scanResult, triggerScan, loading, error } = useScan();
+  const { scanResult, triggerScan, loading, error, lastUpdated, refreshAllPages } = useScan();
+  const [forceUpdate, setForceUpdate] = useState(0);
+  
+  // Force refresh when scan results change
+  useEffect(() => {
+    if (lastUpdated) {
+      console.log('Dashboard: Detected scan result update, refreshing with URL:', scanResult?.url);
+      setForceUpdate(prev => prev + 1);
+    }
+  }, [lastUpdated, scanResult?.url]);
+  
+  // Force refresh on component mount
+  useEffect(() => {
+    console.log('Dashboard: Component mounted, refreshing');
+    refreshAllPages();
+  }, []);
   const [url, setUrl] = useState('');
   const [scanType, setScanType] = useState<'Quick' | 'Full' | 'Custom'>('Quick');
   const [username, setUsername] = useState('');
@@ -63,8 +78,12 @@ export default function Dashboard() {
         </button>
       </div>
       {error && <div className="text-red-600">{error}</div>}
-      {scanResult && (
+      {scanResult ? (
         <>
+          <div className="mb-4">
+            <span className="font-mono text-gray-400 text-xs">URL:</span>
+            <span className="ml-2 text-cyber-blue font-mono text-xs">{scanResult?.url || scanResult?.scanOptions?.url || "(unknown)"}</span>
+          </div>
           <ThreatLevelIndicator level={scanResult.threat_level} />
           <div className="mt-6">
             <h2 className="text-xl font-semibold mb-2">Vulnerabilities</h2>
@@ -79,6 +98,8 @@ export default function Dashboard() {
             <AlertsPanel alerts={scanResult.alerts} />
           </div>
         </>
+      ) : (
+        <div className="text-gray-400 text-center mt-8">No scan results available. Please run a scan from the Scanner page.</div>
       )}
     </div>
   );

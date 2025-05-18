@@ -584,7 +584,7 @@ const SettingsPage = () => {
                 <div className="space-y-4">
                   <div>
                     <h3 className="text-sm font-medium text-gray-400">Application</h3>
-                    <p className="text-sm font-mono text-cyber-blue">CyberPulse v1.2.4</p>
+                    <p className="text-sm font-mono text-cyber-blue">SentinelAI v1.2.4</p>
                   </div>
                   
                   <div>

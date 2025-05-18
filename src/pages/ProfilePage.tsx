@@ -112,6 +112,16 @@ const ProfilePage = () => {
         </div>
       </div>
     </div>
+    <div className="flex justify-center mt-8">
+      {/* Sign Out Button */}
+      <div>
+        {/* Import and use SignOutButton */}
+        {/* @ts-ignore */}
+        {require('../components/SignOutButton').default && (
+          require('../components/SignOutButton').default()
+        )}
+      </div>
+    </div>
   );
 };
 

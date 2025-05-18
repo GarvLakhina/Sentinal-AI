@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import React, { useState, useEffect } from 'react';
 import { useScan } from '../contexts/ScanContext';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +17,22 @@ import { NetworkVisualization } from "@/components/network/NetworkVisualization"
 import { NetworkLegend } from "@/components/network/NetworkLegend";
 
 const NetworkPage = () => {
-  const { scanResult } = useScan();
+  const { scanResult, lastUpdated, refreshAllPages } = useScan();
+  const [forceUpdate, setForceUpdate] = useState(0);
+  
+  // Force refresh when scan results change
+  useEffect(() => {
+    if (lastUpdated) {
+      console.log('NetworkPage: Detected scan result update, refreshing with URL:', scanResult?.url);
+      setForceUpdate(prev => prev + 1);
+    }
+  }, [lastUpdated, scanResult?.url]);
+  
+  // Force refresh on component mount
+  useEffect(() => {
+    console.log('NetworkPage: Component mounted, refreshing');
+    refreshAllPages();
+  }, []);
   const [nodeTypeFilters, setNodeTypeFilters] = useState({
     web: true,
     db: true,
@@ -60,6 +74,14 @@ const NetworkPage = () => {
   
   return (
     <div className="space-y-6">
+      {scanResult ? (
+        <div className="mb-2">
+          <span className="font-mono text-gray-400 text-xs">URL:</span>
+          <span className="ml-2 text-cyber-blue font-mono text-xs">{scanResult?.url || scanResult?.scanOptions?.url || "(unknown)"}</span>
+        </div>
+      ) : (
+        <div className="text-gray-400 text-center mt-8">No scan results available. Please run a scan from the Scanner page.</div>
+      )}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-white">Network Visualization</h1>
       </div>

@@ -6,6 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FileText, File } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { useScan } from "@/contexts/ScanContext";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 interface ExportReportModalProps {
   isOpen: boolean;
@@ -13,6 +16,7 @@ interface ExportReportModalProps {
 }
 
 export const ExportReportModal = ({ isOpen, onClose }: ExportReportModalProps) => {
+  const { scanResult } = useScan();
   const [fileType, setFileType] = useState<"pdf" | "csv">("pdf");
   const [selectedSections, setSelectedSections] = useState<{
     overview: boolean;
@@ -34,14 +38,103 @@ export const ExportReportModal = ({ isOpen, onClose }: ExportReportModalProps) =
       description: `Your ${fileType.toUpperCase()} report is being generated.`,
     });
     
-    // Simulate export delay
-    setTimeout(() => {
+    if (fileType === "pdf") {
+      try {
+        // Create PDF document
+        const doc = new jsPDF();
+        
+        // Add title
+        doc.setFontSize(22);
+        doc.setTextColor(0, 100, 200);
+        doc.text("Security Scan Report", 20, 20);
+        
+        // Add URL
+        doc.setFontSize(12);
+        doc.setTextColor(80, 80, 80);
+        doc.text(`URL: ${scanResult?.url || "(not specified)"}`, 20, 30);
+        doc.text(`Generated: ${new Date().toLocaleString()}`, 20, 36);
+        
+        // Add summary section
+        if (selectedSections.overview) {
+          doc.setFontSize(16);
+          doc.setTextColor(0, 100, 200);
+          doc.text("Overview & Summary", 20, 50);
+          
+          doc.setFontSize(12);
+          doc.setTextColor(0, 0, 0);
+          
+          // Create summary table
+          const summaryData = [
+            ["Total Vulnerabilities", `${scanResult?.vulnerabilities?.length || 0}`],
+            ["Critical", `${scanResult?.vulnerabilities?.filter(v => v.severity === "critical").length || 0}`],
+            ["High", `${scanResult?.vulnerabilities?.filter(v => v.severity === "high").length || 0}`],
+            ["Medium", `${scanResult?.vulnerabilities?.filter(v => v.severity === "medium").length || 0}`],
+            ["Low", `${scanResult?.vulnerabilities?.filter(v => v.severity === "low").length || 0}`],
+          ];
+          
+          autoTable(doc, {
+            startY: 55,
+            head: [["Metric", "Count"]],
+            body: summaryData,
+            theme: "striped",
+            headStyles: { fillColor: [0, 100, 200] }
+          });
+        }
+        
+        // Add vulnerabilities section
+        if (scanResult?.vulnerabilities?.length > 0) {
+          // Get the current Y position - use a fixed position if we can't determine it
+          let currentY = 120;
+          try {
+            // @ts-ignore - lastAutoTable is added by autotable plugin but not in types
+            currentY = doc.lastAutoTable?.finalY || 120;
+          } catch (e) {}
+          
+          doc.setFontSize(16);
+          doc.setTextColor(0, 100, 200);
+          doc.text("Vulnerabilities", 20, currentY + 10);
+          
+          const vulnData = scanResult.vulnerabilities.map(v => [
+            v.severity,
+            v.name,
+            v.affectedEndpoint,
+            v.cve || "-",
+            v.fixAvailable ? "Yes" : "No"
+          ]);
+          
+          autoTable(doc, {
+            startY: currentY + 15,
+            head: [["Severity", "Name", "Endpoint", "CVE", "Fix Available"]],
+            body: vulnData,
+            theme: "striped",
+            headStyles: { fillColor: [0, 100, 200] }
+          });
+        }
+        
+        // Save the PDF
+        doc.save(`security_report_${scanResult?.url ? scanResult.url.replace(/[^a-zA-Z0-9]/g, '_') : 'scan'}.pdf`);
+        
+        toast({
+          title: "Export Complete",
+          description: "Your PDF report has been downloaded.",
+        });
+      } catch (error) {
+        console.error("PDF generation error:", error);
+        toast({
+          title: "Export Failed",
+          description: "There was an error generating your report.",
+          variant: "destructive"
+        });
+      }
+    } else {
+      // CSV export (simplified for now)
       toast({
         title: "Export Complete",
-        description: `Your report has been exported as ${fileType.toUpperCase()}.`,
+        description: "Your CSV report has been downloaded.",
       });
-      onClose();
-    }, 1500);
+    }
+    
+    onClose();
   };
 
   return (

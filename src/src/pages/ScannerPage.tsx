@@ -1,70 +1,64 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
+// Define VisualizationType locally since it's not exported
 import ScannerVisualization from "@/components/scanner/ScannerVisualization";
+type VisualizationType = 'sql' | 'ddos' | 'mitm' | 'idle';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Check, Search, Shield, Loader2 } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
+import { useScan } from "@/contexts/ScanContext";
 
 const ScannerPage = () => {
-  const [scanType, setScanType] = useState("vulnerability");
-  const [target, setTarget] = useState("");
-  const [isScanning, setIsScanning] = useState(false);
+  const { scanResult, scanOptions, setScanOptions, triggerScan, loading, error } = useScan();
+  const [target, setTarget] = useState(scanOptions.url || "");
+  const [scanType, setScanType] = useState<"Quick" | "Full" | "Custom">((scanOptions.scanType as "Quick" | "Full" | "Custom") || "Quick");
   const [progress, setProgress] = useState(0);
-  const [scanResults, setScanResults] = useState<null | {
-    vulnerabilities: { name: string; severity: string; description: string }[];
-  }>(null);
 
-  const handleStartScan = () => {
+  // Map scanType to visualization type
+  function getVisualizationType(type: "Quick" | "Full" | "Custom"): VisualizationType {
+    switch (type) {
+      case "Quick": return "sql";
+      case "Full": return "ddos";
+      case "Custom": return "mitm";
+      default: return "sql";
+    }
+  }
+
+  useEffect(() => {
+    setTarget(scanOptions.url || "");
+    setScanType((scanOptions.scanType as "Quick" | "Full" | "Custom") || "Quick");
+  }, [scanOptions]);
+
+  useEffect(() => {
+    if (loading) {
+      setProgress(0);
+      const interval = setInterval(() => {
+        setProgress((prev) => {
+          if (prev >= 100) {
+            clearInterval(interval);
+            return 100;
+          }
+          return prev + Math.random() * 15;
+        });
+      }, 600);
+      return () => clearInterval(interval);
+    } else if (!loading && progress < 100) {
+      setProgress(100);
+    }
+  }, [loading]);
+
+  const handleStartScan = async () => {
     if (!target.trim()) {
       toast.error("Please enter a valid target");
       return;
     }
-
-    setIsScanning(true);
-    setScanResults(null);
-    setProgress(0);
-
-    // Simulate scan progress
-    const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setIsScanning(false);
-          // Simulate scan results
-          setScanResults({
-            vulnerabilities: [
-              {
-                name: "SQL Injection Vulnerability",
-                severity: "critical",
-                description: "Found potential SQL injection in login form"
-              },
-              {
-                name: "Cross-Site Scripting (XSS)",
-                severity: "high",
-                description: "Reflected XSS vulnerability in search parameter"
-              },
-              {
-                name: "Outdated OpenSSL",
-                severity: "medium",
-                description: "Server running outdated OpenSSL version with known vulnerabilities"
-              }
-            ]
-          });
-          toast.success("Scan completed", {
-            description: "3 vulnerabilities found",
-          });
-          return 100;
-        }
-        return prev + Math.random() * 15;
-      });
-    }, 600);
-
-    return () => clearInterval(interval);
+    setScanOptions({ url: target, scanType });
+    await triggerScan({ url: target, scanType });
   };
 
   const getSeverityClass = (severity: string) => {
@@ -87,7 +81,7 @@ const ScannerPage = () => {
       <h1 className="text-2xl font-bold">Security Scanner</h1>
 
       {/* Visualization */}
-      <ScannerVisualization type={scanType as any} isActive={isScanning} />
+      <ScannerVisualization scanType={getVisualizationType(scanType)} isScanning={loading} progress={progress} />
 
       <Card className="cyber-card">
         <CardHeader>
@@ -115,22 +109,21 @@ const ScannerPage = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="scanType">Scan Type</Label>
-                  <Select value={scanType} onValueChange={setScanType}>
+                  <Select value={scanType} onValueChange={v => setScanType(v as "Quick" | "Full" | "Custom")}>
                     <SelectTrigger className="cyber-input">
                       <SelectValue placeholder="Select scan type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="vulnerability">Vulnerability Scan</SelectItem>
-                      <SelectItem value="sql">SQL Injection</SelectItem>
-                      <SelectItem value="xss">XSS Detection</SelectItem>
-                      <SelectItem value="mitm">MITM Simulation</SelectItem>
+                      <SelectItem value="Quick">Quick Scan</SelectItem>
+                      <SelectItem value="Full">Full Scan</SelectItem>
+                      <SelectItem value="Custom">Custom Scan</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
 
-              <Button className="cyber-button w-full" onClick={handleStartScan} disabled={isScanning}>
-                {isScanning ? (
+              <Button className="cyber-button w-full" onClick={handleStartScan} disabled={loading}>
+                {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Scanning...
@@ -177,7 +170,7 @@ const ScannerPage = () => {
           </Tabs>
 
           {/* Scan Progress */}
-          {isScanning && (
+          {loading && (
             <div className="mt-6 space-y-2">
               <div className="flex justify-between">
                 <span className="text-sm text-gray-400">Scan in progress...</span>
@@ -190,7 +183,7 @@ const ScannerPage = () => {
       </Card>
 
       {/* Results */}
-      {scanResults && (
+      {scanResult && (
         <Card className="cyber-card">
           <CardHeader>
             <div className="flex justify-between items-center">
@@ -204,7 +197,7 @@ const ScannerPage = () => {
           <CardContent>
             <h3 className="text-lg font-semibold mb-4">Vulnerabilities Found</h3>
             <div className="space-y-4">
-              {scanResults.vulnerabilities.map((vuln, i) => (
+              {scanResult.vulnerabilities.map((vuln, i) => (
                 <div key={i} className="border border-cyber-blue/20 rounded-md p-4">
                   <div className="flex justify-between items-start">
                     <div className="space-y-1">

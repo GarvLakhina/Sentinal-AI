@@ -227,7 +227,7 @@ const LoginPage = () => {
           </div>
           
           <h1 className="text-center text-2xl font-bold font-mono tracking-tight text-cyber-blue mb-2">
-            CyberPulse
+            SentinelAI
           </h1>
           <p className="text-center text-sm text-gray-400 mb-6">
             Advanced Penetration Testing Platform

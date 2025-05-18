@@ -34,7 +34,7 @@ const AppLayout = () => {
                 <Shield size={18} className="text-black" />
               </div>
               <span className="font-mono text-xl tracking-tight text-cyber-blue">
-                CyberPulse
+                SentinelAI
               </span>
             </div>
             <Button
