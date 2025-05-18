@@ -1,73 +1,128 @@
-# Welcome to your Lovable project
+# Sentinal-AI
 
-## Project info
+![Sentinal-AI Logo](https://via.placeholder.com/150x150?text=Sentinal-AI)
 
-**URL**: https://lovable.dev/projects/6f02b582-0cb5-42be-ad90-7bd0dbad1165
+## Overview
 
-## How can I edit this code?
+Sentinal-AI is a comprehensive cybersecurity scanning and monitoring platform designed to identify, analyze, and report on various security vulnerabilities in web applications. The platform leverages AI to provide intelligent threat detection and actionable security insights.
 
-There are several ways of editing your application.
+## Features
 
-**Use Lovable**
+- **Vulnerability Scanning**: Detect SQL injections, XSS, and other common web vulnerabilities
+- **Network Monitoring**: Real-time network traffic analysis and visualization
+- **Security Reports**: Generate detailed security reports with remediation recommendations
+- **Dashboard Analytics**: Visualize security metrics and trends
+- **User Authentication**: Secure login and user management via Firebase
+- **Customizable Scans**: Configure scan types (Quick, Full, Custom) based on your needs
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/6f02b582-0cb5-42be-ad90-7bd0dbad1165) and start prompting.
+## Tech Stack
 
-Changes made via Lovable will be committed automatically to this repo.
+- **Frontend**: React, TypeScript, Vite
+- **UI Components**: shadcn-ui, Tailwind CSS, Lucide React icons
+- **State Management**: React Context API, TanStack Query
+- **Authentication**: Firebase Authentication
+- **Database**: Firebase Firestore
+- **Visualization**: Recharts, vis-network
+- **PDF Export**: jsPDF, jsPDF-autotable
 
-**Use your preferred IDE**
+## Getting Started
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Prerequisites
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- Node.js (v16 or higher)
+- npm or yarn
+- A Firebase account for authentication and database services
 
-Follow these steps:
+### Installation
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+1. Clone the repository:
+   ```sh
+   git clone https://github.com/GarvLakhina/Sentinal-AI.git
+   cd Sentinal-AI
+   ```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+2. Install dependencies:
+   ```sh
+   npm install
+   ```
 
-# Step 3: Install the necessary dependencies.
-npm i
+3. Configure Firebase:
+   - Create a `.env` file in the root directory
+   - Add your Firebase configuration:
+     ```
+     VITE_FIREBASE_API_KEY=your_api_key
+     VITE_FIREBASE_AUTH_DOMAIN=your_auth_domain
+     VITE_FIREBASE_PROJECT_ID=your_project_id
+     VITE_FIREBASE_STORAGE_BUCKET=your_storage_bucket
+     VITE_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
+     VITE_FIREBASE_APP_ID=your_app_id
+     ```
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+4. Start the development server:
+   ```sh
+   npm run dev
+   ```
+
+5. For the backend scanning service:
+   - Ensure the backend API is running on `http://localhost:8000`
+   - Or update the API endpoint in `src/contexts/ScanContext.tsx`
+
+## Usage
+
+1. **Login**: Access the application using your Firebase authentication credentials
+2. **Dashboard**: View overall security metrics and recent scan results
+3. **Scanner**: Configure and run security scans on target websites
+4. **Reports**: Generate and export detailed security reports
+5. **Network**: Visualize network connections and potential threats
+6. **Monitoring**: Set up continuous monitoring for critical assets
+
+## Development
+
+### Available Scripts
+
+- `npm run dev` - Start the development server
+- `npm run build` - Build for production
+- `npm run build:dev` - Build for development
+- `npm run lint` - Run ESLint
+- `npm run preview` - Preview the production build
+
+### Project Structure
+
+```
+Sentinal-AI/
+├── public/              # Static assets
+├── src/
+│   ├── components/      # Reusable UI components
+│   │   ├── layout/      # Layout components
+│   │   ├── reports/     # Report-related components
+│   │   ├── scanner/     # Scanner-related components
+│   │   └── ui/          # shadcn UI components
+│   ├── contexts/        # React Context providers
+│   ├── firebase/        # Firebase configuration
+│   ├── lib/             # Utility functions
+│   ├── pages/           # Page components
+│   ├── styles/          # Global styles
+│   ├── App.tsx          # Main application component
+│   └── main.tsx         # Application entry point
+├── .env                 # Environment variables (create this)
+├── package.json         # Dependencies and scripts
+└── README.md            # This file
 ```
 
-**Edit a file directly in GitHub**
+## Contributing
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-**Use GitHub Codespaces**
+## License
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-## What technologies are used for this project?
+## Acknowledgments
 
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/6f02b582-0cb5-42be-ad90-7bd0dbad1165) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+- shadcn-ui for the beautiful UI components
+- Firebase for authentication and database services
+- The React community for their amazing tools and libraries
