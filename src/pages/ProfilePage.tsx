@@ -77,49 +77,51 @@ const ProfilePage = () => {
 );
 
   return (
-    <div className="max-w-md mx-auto mt-12 bg-cyber-dark rounded-lg shadow-lg p-8 text-center">
-      <div className="flex flex-col items-center space-y-3">
-        <div className="h-16 w-16 rounded-full bg-cyber-subtle flex items-center justify-center text-2xl font-bold">
-          {editName.split(" ").map(n => n[0]).join("").toUpperCase()}
-        </div>
-        <div className="w-full mt-4">
-          <label className="block text-left text-gray-400 mb-1">Name</label>
-          <input
-            type="text"
-            value={editName}
-            onChange={e => setEditName(e.target.value)}
-            className="w-full px-3 py-2 rounded bg-cyber-dark border border-cyber-blue/40 text-gray-200 mb-3 focus:outline-none focus:border-cyber-blue"
-          />
-          <label className="block text-left text-gray-400 mb-1">Role</label>
-          <input
-            type="text"
-            value={editRole}
-            onChange={e => setEditRole(e.target.value)}
-            className="w-full px-3 py-2 rounded bg-cyber-dark border border-cyber-blue/40 text-gray-200 mb-3 focus:outline-none focus:border-cyber-blue"
-          />
-          <button
-            onClick={handleUpdate}
-            disabled={saving}
-            className="mt-2 px-4 py-2 rounded bg-cyber-blue text-black font-semibold hover:bg-cyber-blue/80 disabled:opacity-60 w-full"
-          >
-            {saving ? "Saving..." : "Update Profile"}
-          </button>
-          {success && <div className="text-green-400 mt-2">Profile updated!</div>}
-        </div>
-        <div className="mt-4 w-full">
-          <p className="text-gray-400">Email:</p>
-          <p className="text-gray-300 font-mono">{profile.email}</p>
+    <div>
+      <div className="max-w-md mx-auto mt-12 bg-cyber-dark rounded-lg shadow-lg p-8 text-center">
+        <div className="flex flex-col items-center space-y-3">
+          <div className="h-16 w-16 rounded-full bg-cyber-subtle flex items-center justify-center text-2xl font-bold">
+            {editName.split(" ").map(n => n[0]).join("").toUpperCase()}
+          </div>
+          <div className="w-full mt-4">
+            <label className="block text-left text-gray-400 mb-1">Name</label>
+            <input
+              type="text"
+              value={editName}
+              onChange={e => setEditName(e.target.value)}
+              className="w-full px-3 py-2 rounded bg-cyber-dark border border-cyber-blue/40 text-gray-200 mb-3 focus:outline-none focus:border-cyber-blue"
+            />
+            <label className="block text-left text-gray-400 mb-1">Role</label>
+            <input
+              type="text"
+              value={editRole}
+              onChange={e => setEditRole(e.target.value)}
+              className="w-full px-3 py-2 rounded bg-cyber-dark border border-cyber-blue/40 text-gray-200 mb-3 focus:outline-none focus:border-cyber-blue"
+            />
+            <button
+              onClick={handleUpdate}
+              disabled={saving}
+              className="mt-2 px-4 py-2 rounded bg-cyber-blue text-black font-semibold hover:bg-cyber-blue/80 disabled:opacity-60 w-full"
+            >
+              {saving ? "Saving..." : "Update Profile"}
+            </button>
+            {success && <div className="text-green-400 mt-2">Profile updated!</div>}
+          </div>
+          <div className="mt-4 w-full">
+            <p className="text-gray-400">Email:</p>
+            <p className="text-gray-300 font-mono">{profile.email}</p>
+          </div>
         </div>
       </div>
-    </div>
-    <div className="flex justify-center mt-8">
-      {/* Sign Out Button */}
-      <div>
-        {/* Import and use SignOutButton */}
-        {/* @ts-ignore */}
-        {require('../components/SignOutButton').default && (
-          require('../components/SignOutButton').default()
-        )}
+      <div className="flex justify-center mt-8">
+        {/* Sign Out Button */}
+        <div>
+          {/* Import and use SignOutButton */}
+          {/* @ts-ignore */}
+          {require('../components/SignOutButton').default && (
+            require('../components/SignOutButton').default()
+          )}
+        </div>
       </div>
     </div>
   );
