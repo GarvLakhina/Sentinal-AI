@@ -1,7 +1,4 @@
-
 import { useState, useEffect } from "react";
-
-
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,10 +20,31 @@ import {
   ArrowRight,
   Database,
   Code,
-  Zap
+  Zap,
+  Info
 } from "lucide-react";
+import {
+  TooltipProvider,
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent
+} from "@/components/ui/tooltip";
 import ScannerVisualization, { VisualizationType } from "@/components/scanner/ScannerVisualization";
 import ExportPDFButton from "@/components/scanner/ExportPDFButton";
+// Import 2D attack animation components
+import DDoSAttack from "@/components/scanner/DDoSAttack";
+import MitmAttack from "@/components/scanner/MitmAttack";
+import SQLInjection from "@/components/scanner/SQLInjection";
+
+// Integrate with backend ML scan results
+import { useScan } from "@/contexts/ScanContext";
+
+// List of all attack types for dropdowns and probability mapping
+const ALL_ATTACK_TYPES: { type: VisualizationType; label: string }[] = [
+  { type: 'sql', label: 'SQL Injection' },
+  { type: 'mitm', label: 'Man-in-the-Middle' },
+  { type: 'ddos', label: 'DDoS' }
+];
 
 interface Vulnerability {
   id: string;
@@ -37,9 +55,6 @@ interface Vulnerability {
   cve?: string;
   fixAvailable: boolean;
 }
-
-// Integrate with backend ML scan results
-import { useScan } from "@/contexts/ScanContext";
 
 const ScannerPage = () => {
   // All hooks must be called before any return!
@@ -60,11 +75,11 @@ const ScannerPage = () => {
   const [visualizationType, setVisualizationType] = useState<"sql" | "ddos" | "mitm" | "idle">("idle");
   const [selectedAttackType, setSelectedAttackType] = useState('sql');
 
-  const ALL_ATTACK_TYPES: { type: VisualizationType, label: string }[] = [
-    { type: 'sql', label: 'SQL Injection' },
-    { type: 'mitm', label: 'Man-in-the-Middle' },
-    { type: 'ddos', label: 'DDoS' },
-    { type: 'idle', label: 'Other' },
+  // List of all available attack animations for preview
+  const ATTACK_ANIMATIONS = [
+    { type: 'sql', label: 'SQL Injection', component: SQLInjection },
+    { type: 'mitm', label: 'Man-in-the-Middle', component: MitmAttack },
+    { type: 'ddos', label: 'DDoS', component: DDoSAttack },
   ];
 
   // Map backend vulnerability types to VisualizationType
@@ -80,7 +95,11 @@ const ScannerPage = () => {
   }
 
   // Build probabilities for visualization based on backend attackProbabilities if present
-  let dropdownOptions = ALL_ATTACK_TYPES.map(a => ({ ...a, probability: 0 }));
+  let dropdownOptions = ALL_ATTACK_TYPES.map(a => ({
+    type: a.type,
+    label: a.label,
+    probability: 0
+  }));
 
   if (scanResult && scanResult.attackProbabilities) {
     // Use backend probabilities if present
@@ -150,6 +169,7 @@ const ScannerPage = () => {
       </div>
     );
   }
+  
   if (error) {
     return <div className="py-20 text-center text-red-500 text-lg font-semibold">{error}</div>;
   }
@@ -175,13 +195,11 @@ const ScannerPage = () => {
     }
   };
 
-  
   // Start scan
   const startScan = () => {
     setIsScanning(true);
     setScanComplete(false);
     setProgress(0);
-    setScanComplete(false);
     
     // Determine which target to use
     const targetUrl = targets[0] || "";
@@ -214,7 +232,7 @@ const ScannerPage = () => {
     }, 200);
   };
 
-  // Severity badge color
+  // Helper function to get severity color
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case "critical": return "bg-red-500/20 text-red-400 border-red-500/40";
@@ -249,7 +267,12 @@ const ScannerPage = () => {
             </select>
           </div>
         </div>
-        <ScannerVisualization scanType={selectedAttackType as any} isScanning={isScanning} progress={progress} probabilities={dropdownOptions} />
+        <ScannerVisualization 
+          scanType={selectedAttackType as VisualizationType} 
+          isScanning={isScanning} 
+          progress={progress} 
+          probabilities={dropdownOptions.filter(opt => ['sql','mitm','ddos','idle'].includes(opt.type))} 
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -339,16 +362,11 @@ const ScannerPage = () => {
               {loading ? (
                 <>Running Scan...</>
               ) : (
-                <>
-                  <Play size={16} />
-                  Start Scan
-                </>
+                <>Run Scan</>
               )}
             </Button>
           </CardContent>
         </Card>
-
-        {/* Scan Results */}
         <Card className="cyber-card lg:col-span-2">
           <CardHeader className="pb-2 flex flex-row items-center justify-between">
             <CardTitle className="text-lg font-mono text-gray-300">Scan Results</CardTitle>
@@ -367,114 +385,83 @@ const ScannerPage = () => {
                     style={{ width: '50%' }}
                   />
                 </div>
-                <div className="grid grid-cols-4 gap-2 mt-4">
-                  {["Initializing", "Port Scanning", "Vulnerability Detection", "Reporting"].map((stage, index) => (
-                    <div
-                      key={stage}
-                      className={`text-center p-2 rounded-md text-xs ${
-                        index === 0
-                          ? "bg-cyber-blue/20 text-cyber-blue"
-                          : "bg-cyber-darker text-gray-500"
-                      }`}
-                    >
-                      {stage}
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-4 animate-pulse text-center text-sm text-gray-400">
-                  Setting up scan environment...
-                </div>
               </div>
             )}
-            
-            {/* Empty state */}
-            {!loading && !scanResult && (
-              <div className="py-12 flex flex-col items-center justify-center text-gray-500">
-                <Shield size={48} className="mb-4 opacity-50" />
-                <p className="text-center mb-2">No scan results yet.</p>
-                <p className="text-center text-sm">Configure target and press "Start Scan" to begin.</p>
+            {/* Vulnerabilities summary and results */}
+            <div>
+              <div className="flex gap-4 mb-4">
+                <div className="flex flex-col items-center justify-center p-4 bg-cyber-darker rounded-lg border border-cyber-blue/30">
+                  <span className="text-cyber-blue text-2xl font-bold">{vulnerabilities.length}</span>
+                  <span className="text-xs text-gray-400 mt-1">Total</span>
+                </div>
+                <div className="flex flex-col items-center justify-center p-4 bg-cyber-darker rounded-lg border border-cyber-blue/30">
+                  <span className="text-red-400 text-2xl font-bold">{vulnerabilities.filter(v => v.severity === 'critical').length}</span>
+                  <span className="text-xs text-gray-400 mt-1">Critical</span>
+                </div>
+                <div className="flex flex-col items-center justify-center p-4 bg-cyber-darker rounded-lg border border-cyber-blue/30">
+                  <span className="text-orange-400 text-2xl font-bold">{vulnerabilities.filter(v => v.severity === 'high').length}</span>
+                  <span className="text-xs text-gray-400 mt-1">High</span>
+                </div>
+                <div className="flex flex-col items-center justify-center p-4 bg-cyber-darker rounded-lg border border-cyber-blue/30">
+                  <span className="text-yellow-400 text-2xl font-bold">{vulnerabilities.filter(v => v.severity === 'medium').length}</span>
+                  <span className="text-xs text-gray-400 mt-1">Medium</span>
+                </div>
+                <div className="flex flex-col items-center justify-center p-4 bg-cyber-darker rounded-lg border border-cyber-blue/30">
+                  <span className="text-blue-400 text-2xl font-bold">{vulnerabilities.filter(v => v.severity === 'low').length}</span>
+                  <span className="text-xs text-gray-400 mt-1">Low</span>
+                </div>
               </div>
-            )}
-            
-            {/* Scan results */}
-            {scanResult && (
-              <div className="space-y-6">
-                {/* Summary Stats */}
-                <div className="grid grid-cols-5 gap-4 mb-4">
-                  <div className="flex flex-col items-center justify-center p-4 bg-cyber-darker rounded-lg border border-cyber-blue/30">
-                    <span className="text-cyber-blue text-2xl font-bold">{vulnerabilities.length}</span>
-                    <span className="text-xs text-gray-400 mt-1">Total</span>
-                  </div>
-                  <div className="flex flex-col items-center justify-center p-4 bg-cyber-darker rounded-lg border border-cyber-blue/30">
-                    <span className="text-red-400 text-2xl font-bold">{vulnerabilities.filter(v => v.severity === 'critical').length}</span>
-                    <span className="text-xs text-gray-400 mt-1">Critical</span>
-                  </div>
-                  <div className="flex flex-col items-center justify-center p-4 bg-cyber-darker rounded-lg border border-cyber-blue/30">
-                    <span className="text-orange-400 text-2xl font-bold">{vulnerabilities.filter(v => v.severity === 'high').length}</span>
-                    <span className="text-xs text-gray-400 mt-1">High</span>
-                  </div>
-                  <div className="flex flex-col items-center justify-center p-4 bg-cyber-darker rounded-lg border border-cyber-blue/30">
-                    <span className="text-yellow-400 text-2xl font-bold">{vulnerabilities.filter(v => v.severity === 'medium').length}</span>
-                    <span className="text-xs text-gray-400 mt-1">Medium</span>
-                  </div>
-                  <div className="flex flex-col items-center justify-center p-4 bg-cyber-darker rounded-lg border border-cyber-blue/30">
-                    <span className="text-blue-400 text-2xl font-bold">{vulnerabilities.filter(v => v.severity === 'low').length}</span>
-                    <span className="text-xs text-gray-400 mt-1">Low</span>
-                  </div>
-                </div>
-                {/* Export & Auto-fix Buttons */}
-                <div className="flex gap-2 mb-2">
-                  <ExportPDFButton
-                    vulnerabilities={vulnerabilities}
-                    summary={{
-                      total,
-                      critical,
-                      high,
-                      medium,
-                      low,
-                    }}
-                  />
-                  {/* Optionally add Auto-Fix here if implemented */}
-                </div>
-                
-                {/* Results list */}
-                <div className="rounded-md overflow-hidden border border-cyber-blue/20">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="bg-cyber-darker">
-                        <th className="px-4 py-2 text-left text-xs uppercase text-gray-400">Severity</th>
-                        <th className="px-4 py-2 text-left text-xs uppercase text-gray-400">Vulnerability</th>
-                        <th className="px-4 py-2 text-left text-xs uppercase text-gray-400">Endpoint</th>
-                        <th className="px-4 py-2 text-right text-xs uppercase text-gray-400">Action</th>
+              {/* Export & Auto-fix Buttons */}
+              <div className="flex gap-2 mb-2">
+                <ExportPDFButton
+                  vulnerabilities={vulnerabilities}
+                  summary={{
+                    total: vulnerabilities.length,
+                    critical: vulnerabilities.filter(v => v.severity === 'critical').length,
+                    high: vulnerabilities.filter(v => v.severity === 'high').length,
+                    medium: vulnerabilities.filter(v => v.severity === 'medium').length,
+                    low: vulnerabilities.filter(v => v.severity === 'low').length,
+                  }}
+                />
+                {/* Optionally add Auto-Fix here if implemented */}
+              </div>
+              {/* Results list */}
+              <div className="rounded-md overflow-hidden border border-cyber-blue/20">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-cyber-darker">
+                      <th className="px-4 py-2 text-left text-xs uppercase text-gray-400">Severity</th>
+                      <th className="px-4 py-2 text-left text-xs uppercase text-gray-400">Vulnerability</th>
+                      <th className="px-4 py-2 text-left text-xs uppercase text-gray-400">Endpoint</th>
+                      <th className="px-4 py-2 text-right text-xs uppercase text-gray-400">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-cyber-blue/20">
+                    {vulnerabilities.map(vuln => (
+                      <tr key={vuln.id} className="hover:bg-cyber-blue/5 transition-colors">
+                        <td className="px-4 py-3">
+                          <Badge className={getSeverityColor(vuln.severity)}>
+                            {vuln.severity}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="font-medium text-gray-200">{vuln.name}</div>
+                          <div className="text-xs text-gray-500 mt-1">{vuln.cve || "No CVE assigned"}</div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="text-gray-300 font-mono">{vuln.affectedEndpoint}</div>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <Button size="sm" variant="ghost" className="text-xs text-cyber-blue">
+                            Details <ArrowRight size={12} className="ml-1" />
+                          </Button>
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody className="divide-y divide-cyber-blue/20">
-                      {vulnerabilities.map(vuln => (
-                        <tr key={vuln.id} className="hover:bg-cyber-blue/5 transition-colors">
-                          <td className="px-4 py-3">
-                            <Badge className={getSeverityColor(vuln.severity)}>
-                              {vuln.severity}
-                            </Badge>
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="font-medium text-gray-200">{vuln.name}</div>
-                            <div className="text-xs text-gray-500 mt-1">{vuln.cve || "No CVE assigned"}</div>
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="text-gray-300 font-mono">{vuln.affectedEndpoint}</div>
-                          </td>
-                          <td className="px-4 py-3 text-right">
-                            <Button size="sm" variant="ghost" className="text-xs text-cyber-blue">
-                              Details <ArrowRight size={12} className="ml-1" />
-                            </Button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            )}
+            </div>
           </CardContent>
         </Card>
       </div>

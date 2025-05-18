@@ -1,4 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { getAuth } from 'firebase/auth';
+import { db } from '@/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 interface ScanOptions {
   url?: string;
@@ -93,7 +96,20 @@ export function ScanProvider({ children }: { children: React.ReactNode }) {
       // Update the scan result which will trigger the useEffect
       setScanResult(data);
       globalScanResult = data;
-      
+
+      // Store scan result in Firestore for this user
+      try {
+        const user = getAuth().currentUser;
+        if (user) {
+          await addDoc(collection(db, 'users', user.uid, 'scans'), {
+            ...data,
+            createdAt: serverTimestamp(),
+          });
+        }
+      } catch (firebaseErr) {
+        console.error('Failed to store scan in Firestore:', firebaseErr);
+      }
+
       // Force refresh
       setLastUpdated(Date.now());
     } catch (err: any) {
