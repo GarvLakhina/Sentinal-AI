@@ -25,6 +25,7 @@ Sentinal-AI is a comprehensive cybersecurity scanning and monitoring platform de
 - **Visualization**: Recharts, vis-network
 - **PDF Export**: jsPDF, jsPDF-autotable
 
+
 ## Getting Started
 
 ### Prerequisites
@@ -64,7 +65,9 @@ Sentinal-AI is a comprehensive cybersecurity scanning and monitoring platform de
    ```
 
 5. For the backend scanning service:
+   - install FastAPI `pip install fastapi uvicorn`
    - Ensure the backend API is running on `http://localhost:8000`
+   - run cd backend and `uvicorn main:app --reload --port 5000`
    - Or update the API endpoint in `src/contexts/ScanContext.tsx`
 
 ## Usage
