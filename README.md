@@ -13,6 +13,47 @@ Sentinal-AI is a comprehensive cybersecurity scanning and monitoring platform de
 - **User Authentication**: Secure login and user management via Firebase
 - **Customizable Scans**: Configure scan types (Quick, Full, Custom) based on your needs
 
+## How it Works (Workflow)
+
+1. **Login Page**
+   ![Login](https://github.com/user-attachments/assets/697a67b8-2c51-4595-bbd9-c7eab404dc24)
+   > Secure user login via Firebase Authentication
+
+2. **Dashboard page**
+   ![Dashboard](https://github.com/user-attachments/assets/489fc543-0bd1-4edb-8454-f468bbd4cb14)
+   > Visual metrics and analytics about threats, past scans, and risk levels
+
+3. **Scanner Page**
+   ![Scanner](https://github.com/user-attachments/assets/3e8fee69-f4f0-4125-a124-2161e4124639)
+   > Users can upload any url & configure scan options: Quick, Full, or Custom
+
+ **Scan Results**
+ 4. **SQL Injection**
+   ![SQL Injection](https://github.com/user-attachments/assets/b3f8d92f-bb89-403c-ad04-c261e8321f34)
+   > 2D visualization showing the scan progress and percentage for SQL Injection vulnerability
+
+5. **DDoS Attack**
+   ![DDoS Attack](https://github.com/user-attachments/assets/10010a17-8ba1-408e-9c17-4459d053898a)
+   > 2D visualization showing the scan progress and percentage for DDoS attack vulnerability
+
+6. **MITM Attack**
+   ![MITM Attack](https://github.com/user-attachments/assets/bb074b81-7f11-4676-8a61-4aaa58531eec)
+   > 2D visualization showing the scan progress and percentage for MITM attack vulnerability
+
+7. **Reports Section**
+   ![Reports](https://github.com/user-attachments/assets/99ce498c-aae1-40ce-b85d-c06903c84af1)
+   > List of generated reports for downloaded insights and report table with types, severity, and recommendations of the scanned link
+
+8. **Network Graph**
+   ![Network](https://github.com/user-attachments/assets/7524c948-eebb-4f40-aa64-746ed56bbcee)
+   > Visual representation of network connections and vulnerabilities of the scanned link
+
+9. **User Profile**
+   ![Profile](https://github.com/user-attachments/assets/c6c4bc36-c45a-4317-bbb8-13d15422268d)
+   > User settings and past activity overview
+
+---
+
 ## Tech Stack
 
 - **Frontend**: React, TypeScript, Vite
