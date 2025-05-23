@@ -1,6 +1,4 @@
-# Sentinal-AI
-
-![Sentinal-AI Logo](https://via.placeholder.com/150x150?text=Sentinal-AI)
+# Sentinel-AI
 
 ## Overview
 
